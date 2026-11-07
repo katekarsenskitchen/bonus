@@ -52,7 +52,7 @@ main{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
 <section id="p-story" class="pane" style="display:none">
  <div class="stage"><div id="spage"><div id="sart"></div><div id="stext"></div></div></div>
  <div class="bar"><button class="btn" id="sprev" aria-label="Previous page">◀</button><button class="btn on" id="slisten">▶ Listen</button><button class="btn" id="snext" aria-label="Next page">▶</button></div>
- <div class="bar"><button class="btn" id="srec">● Mom's voice</button><button class="btn" id="svoice">Voice</button><button class="btn" id="sspeed">Speed: Normal</button><button class="btn hide" id="sdel">Delete</button></div><div class="msg" id="smsg"></div>
+ <div class="bar"><button class="btn" id="srec">● Mom's voice</button><button class="btn hide" id="svoice">Voice</button><button class="btn hide" id="sspeed">Speed: Normal</button><button class="btn hide" id="sdel">Delete</button></div><div class="msg" id="smsg"></div>
 </section>
 </main>
 <div class="note">A grown-up should stay nearby. Mom's voice stays on this device and is lost when the page closes. Nothing is sent or collected.</div>
@@ -143,7 +143,7 @@ try{speechSynthesis.onvoiceschanged=loadVoices;setTimeout(loadVoices,300)}catch(
 $("#sspeed").onclick=()=>{ri=(ri+1)%3;$("#sspeed").textContent="Speed: "+RN[ri];pop(450)};
 $("#svoice").onclick=()=>{if(VO.length){vi=(vi+1)%VO.length;vlabel();$("#smsg").textContent="Voice: "+VO[vi].name;pop(450)}};
 function stopStory(){rt++;try{speechSynthesis.cancel()}catch(e){}if(aud){aud.pause();aud=null}clearInterval(tmr);listening=false;hi(-1);$("#slisten").textContent="▶ Listen";$("#slisten").classList.add("on");if(mrec&&mrec.state=="recording")mrec.stop()}
-function showPage(){stopStory();const art=$("#sart");art.innerHTML="";const im=new Image();im.alt="";const my=sp;im.onload=()=>{if(my!==sp)return;art.innerHTML="";art.appendChild(im)};im.onerror=()=>{if(my===sp)art.innerHTML='<div class="em">'+EM[sp]+'</div>'};im.src="story/p"+(sp+1)+".jpg?v=3";
+function showPage(){stopStory();const art=$("#sart");art.innerHTML="";const im=new Image();im.alt="";const my=sp;im.onload=()=>{if(my!==sp)return;art.innerHTML="";art.appendChild(im)};im.onerror=()=>{if(my===sp)art.innerHTML='<div class="em">'+EM[sp]+'</div>'};im.src="story/p"+(sp+1)+".jpg?v=4";
  $("#stext").innerHTML=wordsHtml(PLAIN[sp]);$("#sdel").classList.toggle("hide",!recs[sp]);$("#srec").textContent=recs[sp]?"● Record again":"● Mom's voice";$("#smsg").textContent=sp==PG.length-1?"The End 🎄":(sp+1)+" / "+PG.length}
 function say(txt,base,tok){return new Promise(res=>{const u=new SpeechSynthesisUtterance(txt);u.lang="en-US";u.rate=RT[ri];u.pitch=1.05;u.volume=1;if(VO[vi]){u.voice=VO[vi];u.lang=VO[vi].lang}
  u.onboundary=e=>{if(tok===rt&&(e.name=="word"||e.name===undefined))hi(base+txt.slice(0,e.charIndex).trim().split(/\s+/).filter(Boolean).length-(e.charIndex>0&&/\s$/.test(txt.slice(0,e.charIndex))?0:0))};
@@ -156,8 +156,8 @@ let NOAUD=false;
 function listen(){if(listening){stopStory();return}
  const n=PLAIN[sp].split(" ").length;listening=true;$("#slisten").textContent="■ Stop";
  if(recs[sp]){aud=new Audio(recs[sp]);aud.onended=stopStory;aud.play().then(()=>{const d=isFinite(aud.duration)&&aud.duration>0?aud.duration:n*.55;let i=0;hi(0);tmr=setInterval(()=>{i++;if(i<n)hi(i)},d*1000/n)}).catch(()=>{stopStory()});return}
- if(!NOAUD){const tok0=rt;aud=new Audio("story/a"+(sp+1)+".mp3?v=3");aud.onerror=()=>{if(tok0===rt){NOAUD=true;aud=null;listening=false;listen()}};aud.onended=()=>{if(tok0===rt)stopStory()};aud.play().then(()=>{if(tok0!==rt)return;const d=isFinite(aud.duration)&&aud.duration>0?aud.duration:n*.55;let i=0;hi(0);tmr=setInterval(()=>{i++;if(i<n)hi(i)},d*1000/n)}).catch(()=>{if(tok0===rt){NOAUD=true;aud=null;listening=false;listen()}});return}
- if(!("speechSynthesis" in window)){listening=false;$("#slisten").textContent="▶ Listen";$("#smsg").textContent="No voice on this device. Ask Mom to record hers!";return}
+ if(!NOAUD){const tok0=rt;aud=new Audio("story/a"+(sp+1)+".mp3?v=4");aud.onerror=()=>{if(tok0===rt){aud=null;listening=false;$("#slisten").textContent="▶ Listen";$("#smsg").textContent="Audio not loaded. Check your internet and try again."}};aud.onended=()=>{if(tok0===rt)stopStory()};aud.play().then(()=>{if(tok0!==rt)return;const d=isFinite(aud.duration)&&aud.duration>0?aud.duration:n*.55;let i=0;hi(0);tmr=setInterval(()=>{i++;if(i<n)hi(i)},d*1000/n)}).catch(()=>{if(tok0===rt){aud=null;listening=false;$("#slisten").textContent="▶ Listen";$("#smsg").textContent="Tap Listen again to hear the story."}});return}
+ if(true){listening=false;$("#slisten").textContent="▶ Listen";$("#smsg").textContent="No voice on this device. Ask Mom to record hers!";return}
  try{speechSynthesis.cancel()}catch(e){}loadVoices();readPage(++rt)}
 $("#slisten").onclick=()=>{pop(500);listen()};
 $("#sprev").onclick=()=>{if(sp>0){sp--;pop(400);showPage()}};
