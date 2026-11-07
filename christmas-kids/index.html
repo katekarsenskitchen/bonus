@@ -152,9 +152,11 @@ async function readPage(tok){let wi=0;for(const s of SEG[sp]){if(tok!==rt)return
  const ss=s.t.match(/[^.!?]+[.!?]+["”']*|[^.!?]+$/g)||[s.t];
  for(const st of ss){if(tok!==rt)return;const t=st.trim();if(!t)continue;await say(t,wi,tok);wi+=t.split(/\s+/).length;if(tok!==rt)return;await wait(/[?]$/.test(t)?900:/[.!]["”']*$/.test(t)?800:350)}}
  if(tok===rt)stopStory()}
+let NOAUD=false;
 function listen(){if(listening){stopStory();return}
  const n=PLAIN[sp].split(" ").length;listening=true;$("#slisten").textContent="■ Stop";
  if(recs[sp]){aud=new Audio(recs[sp]);aud.onended=stopStory;aud.play().then(()=>{const d=isFinite(aud.duration)&&aud.duration>0?aud.duration:n*.55;let i=0;hi(0);tmr=setInterval(()=>{i++;if(i<n)hi(i)},d*1000/n)}).catch(()=>{stopStory()});return}
+ if(!NOAUD){const tok0=rt;aud=new Audio("story/a"+(sp+1)+".mp3");aud.onerror=()=>{if(tok0===rt){NOAUD=true;aud=null;listening=false;listen()}};aud.onended=()=>{if(tok0===rt)stopStory()};aud.play().then(()=>{if(tok0!==rt)return;const d=isFinite(aud.duration)&&aud.duration>0?aud.duration:n*.55;let i=0;hi(0);tmr=setInterval(()=>{i++;if(i<n)hi(i)},d*1000/n)}).catch(()=>{if(tok0===rt){NOAUD=true;aud=null;listening=false;listen()}});return}
  if(!("speechSynthesis" in window)){listening=false;$("#slisten").textContent="▶ Listen";$("#smsg").textContent="No voice on this device. Ask Mom to record hers!";return}
  try{speechSynthesis.cancel()}catch(e){}loadVoices();readPage(++rt)}
 $("#slisten").onclick=()=>{pop(500);listen()};
