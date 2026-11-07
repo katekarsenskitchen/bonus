@@ -163,14 +163,19 @@ $("#slisten").onclick=()=>{pop(500);listen()};
 $("#sprev").onclick=()=>{if(sp>0){sp--;pop(400);showPage()}};
 $("#snext").onclick=()=>{if(sp<PG.length-1){sp++;pop(450);showPage()}};
 $("#sart").onclick=()=>{fx(FXS[sp]);const a=$("#sart");a.classList.remove("bump");void a.offsetWidth;a.classList.add("bump")};
-$("#sdel").onclick=()=>{if(recs[sp]){URL.revokeObjectURL(recs[sp]);recs[sp]=null}showPage()};
+const IDB={open(){return new Promise((res,rej)=>{try{const r=indexedDB.open("momvoice_flurry",1);r.onupgradeneeded=()=>r.result.createObjectStore("r");r.onsuccess=()=>res(r.result);r.onerror=()=>rej()}catch(e){rej()}})},
+async put(k,v){try{const d=await this.open();d.transaction("r","readwrite").objectStore("r").put(v,k)}catch(e){}},
+async del(k){try{const d=await this.open();d.transaction("r","readwrite").objectStore("r").delete(k)}catch(e){}},
+async all(){try{const d=await this.open();return await new Promise(res=>{const o={},q=d.transaction("r").objectStore("r").openCursor();q.onsuccess=()=>{const c=q.result;if(c){o[c.key]=c.value;c.continue()}else res(o)};q.onerror=()=>res({})})}catch(e){return{}}}};
+$("#sdel").onclick=()=>{if(recs[sp]){URL.revokeObjectURL(recs[sp]);recs[sp]=null;IDB.del(sp)}showPage()};
 $("#srec").onclick=async()=>{
  if(mrec&&mrec.state=="recording"){mrec.stop();return}
  stopStory();
  try{const st=await navigator.mediaDevices.getUserMedia({audio:true});const ch=[];mrec=new MediaRecorder(st);
-  mrec.ondataavailable=e=>{if(e.data.size)ch.push(e.data)};
-  mrec.onstop=()=>{st.getTracks().forEach(t=>t.stop());if(ch.length){if(recs[sp])URL.revokeObjectURL(recs[sp]);recs[sp]=URL.createObjectURL(new Blob(ch,{type:mrec.mimeType||"audio/mp4"}))}showPage();$("#smsg").textContent="Saved! Press Listen to hear Mom."};
+  const pg=sp;mrec.ondataavailable=e=>{if(e.data.size)ch.push(e.data)};
+  mrec.onstop=()=>{st.getTracks().forEach(t=>t.stop());if(ch.length){if(recs[pg])URL.revokeObjectURL(recs[pg]);const bl=new Blob(ch,{type:mrec.mimeType||"audio/mp4"});recs[pg]=URL.createObjectURL(bl);IDB.put(pg,bl)}showPage();$("#smsg").textContent="Saved on this device! Press Listen to hear Mom."};
   mrec.start();$("#srec").textContent="■ Stop";$("#smsg").textContent="Recording… read this page aloud, then press Stop."}
  catch(e){$("#smsg").textContent="The microphone is not available. You can still press Listen."}};
 showPage();
+IDB.all().then(o=>{let any=false;for(const k in o){recs[+k]=URL.createObjectURL(o[k]);any=true}if(any)showPage()});
 </script></body></html>
